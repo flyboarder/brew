@@ -46,7 +46,7 @@
 (defn- feathers-error! [error]
   (throw error))
 
-(defn feathers-cell [service & params]
+(defn feathers-cell [service & [params]]
   (let [fcell  (j/cell nil)
         fcell! (partial reset! fcell)]
     (j/with-let [_ (j/cell= fcell fcell!)]

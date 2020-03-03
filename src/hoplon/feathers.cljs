@@ -1,14 +1,18 @@
 (ns hoplon.feathers
-  (:require [javelin.core :as j]
+  (:require [goog.object :as obj]
+            [javelin.core :as j]
             [hoplon.debug :as dbg]
             [feathers.client.services :as fs]))
 
 (def ^:private debug (dbg/debug "hoplon:feathers"))
 
-(defn feathers-created [fcell]
-  (fn [data]
-    (debug "feathers-created called with data" data)
-    (swap! fcell conj (js->clj data :keywordize-keys true))))
+(defn feathers-created [service fcell]
+  (fs/created service
+    (fn [data]
+      (debug "feathers-created called with data" data)
+      (-> (fs/get service (obj/get data "_id"))
+        (.then #(js->clj % :keywordize-keys true))
+        (.then #(swap! fcell conj %))))))
 
 (defn- remap [coll index]
   (zipmap (map index coll) coll))
@@ -51,7 +55,7 @@
         (.then #(js->clj % :keywordize-keys true))
         (.then fcell!)
         (.catch feathers-error!))
-      (fs/created service (feathers-created fcell))
+      (feathers-created service fcell)
       (fs/updated service (feathers-updated fcell))
       (fs/patched service (feathers-patched fcell))
       (fs/removed service (feathers-removed fcell)))))
